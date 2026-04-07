@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWYS — Test Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: #0f0e17;
+    color: #fffffe;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+}
+
+h1 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.8rem;
+    color: #ffe66d;
+    text-shadow: 2px 2px 0 #ff6b35;
+}
+
+.card {
+    background: #221f35;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #a7a9be;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: #fffffe;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+}
+input[type="text"]:focus { border-color: #ff6b35; }
+
+button {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #ff6b35;
+    color: #fff;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 16px rgba(255,107,53,0.4);
+}
+button:active { transform: scale(0.97); }
+
+/* Chat log */
+.log {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.log-item {
+    background: #1a1829;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-left: 3px solid #ff6b35;
+    animation: slideIn 0.2s ease;
+}
+.log-item .user { color: #ffe66d; font-weight: 700; margin-right: 6px; }
+.log-item .msg  { color: #fffffe; }
+
+/* Quick users */
+.quick-users {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.quick-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: #fffffe;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    box-shadow: none;
+}
+.quick-btn:active { transform: scale(0.96); }
+.quick-btn:hover  { background: rgba(255,255,255,0.1); }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.note { color: #a7a9be; font-size: 0.8rem; text-align: center; max-width: 420px; }
+</style>
+</head>
+<body>
+
+<h1>💬 Test Chat</h1>
+<p class="note">Simulate TikTok chat messages. Open the game at <a href="/" style="color:#ff6b35;">localhost:3000</a> in another tab.</p>
+
+<div class="card">
+    <div>
+        <label>Username</label>
+        <input type="text" id="username" value="testuser1" autocomplete="off">
+    </div>
+
+    <div>
+        <label>Quick switch</label>
+        <div class="quick-users">
+            <button class="quick-btn" onclick="setUser('testuser1')">testuser1</button>
+            <button class="quick-btn" onclick="setUser('testuser2')">testuser2</button>
+            <button class="quick-btn" onclick="setUser('testuser3')">testuser3</button>
+            <button class="quick-btn" onclick="setUser('testuser4')">testuser4</button>
+        </div>
+    </div>
+
+    <div>
+        <label>Message</label>
+        <input type="text" id="message" placeholder="Type a guess…" autocomplete="off">
+    </div>
+
+    <button id="btn-send">Send Chat</button>
+    <button id="btn-gift" style="background:#ffe66d;color:#111;">🎁 Send Gift</button>
+</div>
+
+<div class="log" id="log"></div>
+
+<script>
+function setUser(name) {
+    document.getElementById("username").value = name;
+    document.getElementById("message").focus();
+}
+
+async function send() {
+    const username = document.getElementById("username").value.trim();
+    const message  = document.getElementById("message").value.trim();
+    if (!username || !message) return;
+
+    await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, message })
+    });
+
+    // Add to log
+    const log  = document.getElementById("log");
+    const item = document.createElement("div");
+    item.className = "log-item";
+    item.innerHTML = `<span class="user">${username}</span><span class="msg">${message}</span>`;
+    log.prepend(item);
+
+    // Keep log tidy
+    while (log.children.length > 20) log.removeChild(log.lastChild);
+
+    document.getElementById("message").value = "";
+    document.getElementById("message").focus();
+}
+
+document.getElementById("btn-send").addEventListener("click", send);
+document.getElementById("btn-gift").addEventListener("click", sendGift);
+document.getElementById("message").addEventListener("keydown", e => {
+    if (e.key === "Enter") send();
+});
+
+async function sendGift() {
+    const username = document.getElementById("username").value.trim();
+    if (!username) return;
+
+    await fetch("/gift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+    });
+
+    const log  = document.getElementById("log");
+    const item = document.createElement("div");
+    item.className = "log-item";
+    item.style.borderLeftColor = "#ffe66d";
+    item.innerHTML = `<span class="user">${username}</span><span class="msg">🎁 sent a gift</span>`;
+    log.prepend(item);
+    while (log.children.length > 20) log.removeChild(log.lastChild);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Say What You See</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg:      #0f0e17;
+    --surface: #1a1829;
+    --card:    #221f35;
+    --accent:  #ff6b35;
+    --yellow:  #ffe66d;
+    --green:   #06d6a0;
+    --red:     #ef233c;
+    --text:    #fffffe;
+    --muted:   #a7a9be;
+    --radius:  16px;
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-image:
+        radial-gradient(ellipse at 20% 20%, #2a1f4a 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, #1f2a3a 0%, transparent 50%);
+}
+
+h1.logo {
+    font-family: 'Boogaloo', cursive;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    color: var(--yellow);
+    text-shadow: 0 0 40px rgba(255,230,109,0.4), 4px 4px 0 var(--accent);
+    text-align: center;
+    margin-bottom: 8px;
+}
+.tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Screens */
+.screen {
+    display: none;
+    width: 100%;
+    max-width: 600px;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.35s ease;
+}
+.screen.active { display: flex; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Card */
+.card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* Inputs */
+input[type="number"] {
+    width: 100%;
+    padding: 16px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-family: 'Boogaloo', cursive;
+    font-size: 2rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+input[type="number"]:focus { border-color: var(--accent); }
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-start {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,107,53,0.45);
+}
+.btn-start:hover { box-shadow: 0 6px 28px rgba(255,107,53,0.65); }
+.btn-again {
+    background: var(--yellow);
+    color: #111;
+    box-shadow: 0 4px 20px rgba(255,230,109,0.4);
+}
+
+/* Timer */
+.timer {
+    font-family: 'Boogaloo', cursive;
+    font-size: 3rem;
+    color: var(--yellow);
+    line-height: 1;
+    min-width: 56px;
+    text-align: center;
+    transition: color 0.3s;
+}
+.timer.urgent { color: var(--red); animation: pulse 0.5s infinite alternate; }
+@keyframes pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.1); }
+}
+
+/* Stats bar */
+.stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 700;
+}
+.stats-bar span b { color: var(--yellow); }
+
+/* Puzzle image */
+.puzzle-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    position: relative;
+}
+.puzzle-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Tile grid */
+.tile-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px;
+}
+.tile {
+    background: var(--card);
+    border-radius: 6px;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.tile.removed { opacity: 0; transform: scale(0.8); pointer-events: none; }
+
+/* Correct guess feed */
+.guess-feed {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 120px;
+    overflow: hidden;
+}
+.guess-item {
+    background: var(--surface);
+    border-left: 3px solid var(--green);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    animation: slideIn 0.25s ease;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Round answer */
+.round-answer {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.8rem;
+    color: var(--yellow);
+    text-align: center;
+    letter-spacing: 2px;
+    min-height: 40px;
+}
+
+/* Bonus info */
+.bonus-info {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.2rem;
+    color: var(--accent);
+    text-align: center;
+}
+.bonus-pts {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+    color: var(--green);
+    text-align: center;
+}
+
+/* Leaderboard */
+.lb-title {
+    font-family: 'Boogaloo', cursive;
+    font-size: 2.2rem;
+    color: var(--yellow);
+    text-align: center;
+    letter-spacing: 2px;
+}
+.lb-progress {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-align: center;
+}
+.lb-list {
+    list-style: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.lb-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.lb-list li.winner { border-color: var(--yellow); background: rgba(255,230,109,0.07); }
+.lb-rank  { font-size: 1.4rem; width: 32px; text-align: center; }
+.lb-name  { flex: 1; font-weight: 700; }
+.lb-score { font-family: 'Boogaloo', cursive; font-size: 1.4rem; color: var(--yellow); }
+
+.muted { color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #2a1f4a;
+    border: 1px solid var(--yellow);
+    color: var(--yellow);
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+    padding: 12px 24px;
+    border-radius: 50px;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<h1 class="logo">Say What You See</h1>
+<p class="tagline">The TikTok Live guessing game</p>
+
+<!-- ── TITLE ── -->
+<div id="screen-title" class="screen active">
+    <div class="card" style="display:flex;flex-direction:column;gap:20px;text-align:center;">
+        <div>
+            <p style="font-family:'Boogaloo',cursive;font-size:1.2rem;color:var(--muted);margin-bottom:10px;">
+                NUMBER OF CATCHPHRASE ROUNDS
+            </p>
+            <input type="number" id="round-count" value="5" min="1" max="50">
+        </div>
+        <button class="btn btn-start" id="btn-start">Start Game</button>
+    </div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="screen-game" class="screen">
+    <div class="stats-bar">
+        <span>Round <b id="round-num">1</b></span>
+        <span id="correct-count">0 / 10 correct</span>
+    </div>
+    <div class="puzzle-wrap">
+        <img id="puzzle-img" src="" alt="Puzzle">
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;width:100%;">
+        <div id="game-timer" class="timer">–</div>
+        <div id="guess-feed" class="guess-feed"></div>
+    </div>
+    <div id="round-answer" class="round-answer"></div>
+</div>
+
+<!-- ── BONUS ── -->
+<div id="screen-bonus" class="screen">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;">
+        <p style="font-family:'Boogaloo',cursive;font-size:1.8rem;color:var(--yellow);">⭐ Catchphrase!</p>
+        <p class="bonus-info"><span id="bonus-player"></span> is guessing!</p>
+        <div id="bonus-timer" class="timer">–</div>
+    </div>
+    <div class="puzzle-wrap">
+        <img id="bonus-img" src="" alt="Bonus puzzle">
+        <div class="tile-grid">
+            <div class="tile" id="tile-0"></div><div class="tile" id="tile-1"></div><div class="tile" id="tile-2"></div>
+            <div class="tile" id="tile-3"></div><div class="tile" id="tile-4"></div><div class="tile" id="tile-5"></div>
+            <div class="tile" id="tile-6"></div><div class="tile" id="tile-7"></div><div class="tile" id="tile-8"></div>
+        </div>
+    </div>
+    <p id="bonus-pts" class="bonus-pts"></p>
+    <p id="bonus-feedback" class="muted"></p>
+</div>
+
+<!-- ── LEADERBOARD ── -->
+<div id="screen-leaderboard" class="screen">
+    <p class="lb-title">🏆 Leaderboard</p>
+    <p id="lb-progress" class="lb-progress"></p>
+    <ul id="lb-list" class="lb-list"></ul>
+    <p class="muted">Next round in <b id="lb-countdown" style="color:var(--accent);">8</b>s…</p>
+</div>
+
+<!-- ── GAME OVER ── -->
+<div id="screen-gameover" class="screen">
+    <p class="lb-title">🏆 Final Results</p>
+    <ul id="gameover-list" class="lb-list"></ul>
+    <button class="btn btn-again" id="btn-again" style="max-width:600px;">Play Again</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/client.js"></script>
+</body>
+</html>
