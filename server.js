@@ -22,14 +22,12 @@ tiktok.connect()
     .catch(err => console.warn(`TikTok connection failed: ${err.message}\nGame will still work — use POST /chat to simulate messages.`));
 
 tiktok.on("chat", data => {
-    game.handleChatGuess(data.uniqueId, data.comment);
+    game.handleChatGuess(data.nickname, data.comment);
 });
 
 tiktok.on("gift", data => {
-    // Only count non-streakable gifts, or the final gift in a streak
-    // (TikTok fires multiple events during a streak — repeatEnd means it's the last one)
     if (data.giftType === 1 && !data.repeatEnd) return;
-    game.handleGift(data.uniqueId);
+    game.handleGift(data.nickname);
 });
 
 tiktok.on("disconnected", () => {
